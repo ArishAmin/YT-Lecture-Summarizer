@@ -1,0 +1,6 @@
+Flask==2.3.2
+yt-dlp==2023.10.13
+youtube-transcript-api==0.6.1
+transformers==4.34.0
+torch==2.0.1
+sqlite3==2.6.0

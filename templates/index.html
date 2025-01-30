@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Summarizer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+        }
+        .card {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            color: #ffffff;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        #summaryResult h3, #summaryResult p, #summaryResult h4, #historyContainer {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">YouTube Video Summarizer</h1>
+        <div class="card">
+            <label for="url">Enter YouTube URL:</label>
+            <input type="text" id="url" class="form-control" placeholder="Paste YouTube link here...">
+            <label class="mt-2" for="language">Select Language:</label>
+            <select id="language" class="form-control">
+                <option value="en_XX">English</option>
+                <option value="es_XX">Spanish</option>
+                <option value="fr_XX">French</option>
+            </select>
+            <button class="btn btn-primary mt-3 w-100" onclick="summarize()">Summarize</button>
+        </div>
+
+        <div id="loading">
+            <div class="spinner-border text-light" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Summarizing video, please wait...</p>
+        </div>
+
+        <div id="summaryResult" class="card" style="display: none;">
+            <h3 id="videoTitle"></h3>
+            <p id="videoDuration"></p>
+            <img id="videoThumbnail" class="img-fluid" alt="Video Thumbnail">
+            <h4>Summary:</h4>
+            <p id="videoSummary"></p>
+        </div>
+
+        <h3 class="mt-5">History</h3>
+        <div id="historyContainer" class="card"></div>
+    </div>
+
+    <script>
+        function summarize() {
+            let url = $('#url').val();
+            let language = $('#language').val();
+            $('#loading').show();
+            $('#summaryResult').hide();
+            
+            $.ajax({
+                url: '/summarize',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ url, language }),
+                success: function(response) {
+                    $('#loading').hide();
+                    $('#videoTitle').text(response.title);
+                    $('#videoDuration').text('Duration: ' + response.duration);
+                    $('#videoThumbnail').attr('src', response.thumbnail);
+                    $('#videoSummary').text(response.summary);
+                    $('#summaryResult').show();
+                    loadHistory();
+                },
+                error: function(error) {
+                    $('#loading').hide();
+                    alert('Error: ' + error.responseJSON.error);
+                }
+            });
+        }
+
+        function loadHistory() {
+            $.get('/history', function(response) {
+                let historyHTML = '';
+                response.history.forEach(item => {
+                    historyHTML += `<div class='border-bottom pb-2 mb-2' style='color: #ffffff;'>
+                        <strong>${item.title}</strong>
+                        <p>${item.summary}</p>
+                        <a href='${item.url}' target='_blank' style='color: #1e90ff;'>Watch Video</a>
+                    </div>`;
+                });
+                $('#historyContainer').html(historyHTML);
+            });
+        }
+
+        $(document).ready(function() {
+            loadHistory();
+        });
+    </script>
+</body>
+</html>
+
